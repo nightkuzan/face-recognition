@@ -142,7 +142,7 @@ def TrackImages():
     Hour,Minute,Second=timeStamp.split(":")
     fileName="Attendance\Attendance_"+date+"_"+Hour+"-"+Minute+"-"+Second+".csv"
     attendance.to_csv(fileName,index=False)
-    cam.release()
+    cam.release()   
 ######################################## USED STUFFS ############################################
 
 global key
@@ -210,13 +210,13 @@ head1.place(x=0,y=0)
 lbl = tk.Label(frame2, text="รหัส",width=20  ,height=1  ,fg="black"  ,bg="#00aeff" ,font=('times', 17, ' bold ') )
 lbl.place(x=80, y=55)
 
-txt = tk.Entry(frame2,width=32 ,fg="black",font=('./angsau_0', 15, ' bold '))
+txt = tk.Entry(frame2,width=26 ,fg="black" ,bg="white",font=('./angsau_0', 15, ' bold '))
 txt.place(x=30, y=88)
 
 lbl2 = tk.Label(frame2, text="ชื่อ นามสกุล",width=20  ,fg="black"  ,bg="#00aeff" ,font=('times', 17, ' bold '))
 lbl2.place(x=80, y=140)
 
-txt2 = tk.Entry(frame2, width=32 ,fg="black",font=('Courier', 15, ' bold ')  )
+txt2 = tk.Entry(frame2, width=32 ,fg="black",bg="white",font=('Courier', 15, ' bold ')  )
 txt2.place(x=30, y=173)
 
 message1 = tk.Label(frame2, text="1)ถ่ายรูป  >>>  2)บันทึกข้อมูล" ,bg="#00aeff" ,fg="black"  ,width=39 ,height=1, activebackground = "yellow" ,font=('times', 15, ' bold '))
@@ -254,18 +254,16 @@ menubar.add_cascade(label='ตั้งค่า',font=('times', 29, ' bold '),m
 
 ################## TREEVIEW ATTENDANCE TABLE ####################
 
-tv= ttk.Treeview(frame1,height =13,columns = ('name','date','time','temp'))
+tv= ttk.Treeview(frame1,height =13,columns = ('name','date','time'))
 tv.column('#0',width=75)
 tv.column('name',width=110)
 tv.column('date',width=110)
 tv.column('time',width=110)
-tv.column('temp',width=71)
-tv.grid(row=2,column=0,padx=(0,0),pady=(150,0),columnspan=4)
+tv.grid(row=2,column=0,padx=(0,0),pady=(150,0),columnspan=3)
 tv.heading('#0',text ='รหัส')
 tv.heading('name',text ='ชื่อ')
 tv.heading('date',text ='วันที่')
 tv.heading('time',text ='เวลา')
-tv.heading('temp',text ='อุณหภูมิ')
 
 
 ###################### SCROLLBAR ################################
