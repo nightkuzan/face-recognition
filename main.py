@@ -30,44 +30,55 @@ def clear2():
     message.configure(text= res)
 
 def TakeImages():
-    Id=(txt.get())
-    name=(txt2.get())
-    if((Id.isnumeric())):
-        cam = cv2.VideoCapture(0)
-        harcascadePath = "haarcascade_frontalface_default.xml"
-        detector=cv2.CascadeClassifier(harcascadePath)
-        sampleNum=0
-        while(True):
-            ret, img = cam.read()
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            faces = detector.detectMultiScale(gray, 1.3, 5)
-            for (x,y,w,h) in faces:
-                cv2.rectangle(img, (x,y), (x+w,y+h), (255,0,0), 2)
-                #incrementing sample number
-                sampleNum=sampleNum+1
-                #saving the captured face in the dataset folder
-                cv2.imwrite("dataset/User."+Id +'.'+ str(sampleNum) + ".jpg", gray[y:y+h,x:x+w])
-                #display the frame
-                cv2.imshow('frame',img)
-            #wait for 100 miliseconds
-            if cv2.waitKey(100) & 0xFF == ord('q'):
-                break
-            # break if the sample number is morethan 100
-            elif sampleNum>60:
-                break
-        cam.release()
-        cv2.destroyAllWindows()
-        res = "Images Saved for ID : " + Id +" Name : "+ name
-        row = [Id , name]
-        with open('StudentDetails\StudentDetails.csv','a+') as csvFile:
-            writer = csv.writer(csvFile)
-            writer.writerow(row)
-        csvFile.close()
+    
+    # check Id and name
+    if((txt.get() == "") or (txt2.get() == "")):
+        res = "Please enter Id and Name"
         message.configure(text= res)
-    else:
-        if((name.isalpha())):
-            res = "Enter Numeric Id"
-            message.configure(text= res)
+        return
+    cap = cv2.VideoCapture(0)
+
+    # take image for learning
+    while True:
+        start_time = time.time()        
+
+        ret, img = cap.read()
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        Id=(txt.get())
+        name=(txt2.get())
+        face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml') #from git hub https://github.com/opencv/opencv/tree/master/data/haarcascades
+        faces = face_cascade.detectMultiScale(gray, 1.05, 5)
+        sampleNum = 0
+        for (x,y,w,h) in faces:
+            # drawing rectangle for face
+            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            # incrementing sample number
+            sampleNum = sampleNum + 1
+            # saving the captured face in the dataset folder TrainingImage
+            cv2.imwrite("dataset/User." + Id + '.' + str(sampleNum) + ".jpg", gray[y:y + h, x:x + w])
+            # display the frame
+            fpsInfo = "FPS: " + str(1.0 / (time.time() - start_time)) 
+            font = cv2.FONT_HERSHEY_DUPLEX
+            cv2.putText(img, fpsInfo, (10, 20), font, 0.4, (255, 255, 255), 1)
+            cv2.imshow('Taking Images', img)
+        #wait for 100 miliseconds
+        if cv2.waitKey(100) & 0xFF == ord('q'):
+            break
+        # break if the sample number is morethan 100
+        elif sampleNum>100:
+            break
+   
+    cap.release()
+    cv2.destroyAllWindows()
+    
+    res = "Images Taken for ID : " + Id
+    row = [ Id, '', name]
+    with open('StudentDetails\StudentDetails.csv', 'a+', encoding = "cp874") as csvFile:
+        writer = csv.writer(csvFile)
+        writer.writerow(row)
+    csvFile.close()
+    message1.configure(text=res)
+  
 
 def TrainImages():
     recognizer = cv2.face.LBPHFaceRecognizer_create()#recognizer = cv2.face.createLBPHFaceRecognizer()
@@ -102,47 +113,114 @@ def psw():
         message.configure(text= res)
 
 def TrackImages():
-    recognizer = cv2.face.LBPHFaceRecognizer_create()#cv2.createLBPHFaceRecognizer()
-    recognizer.read("TrainingImageLabel\Trainner.yml")
+    # recognizer for face detection
+    
+    recognizer = cv2.face.LBPHFaceRecognizer_create()
+    exists3 = os.path.isfile("TrainingImageLabel\Trainner.yml")
+    if exists3:
+        recognizer.read("TrainingImageLabel\Trainner.yml")
+    # else:
+    #     mess._show(title='ไม่มีข้อมูล', message='กรุณาคลิกที่บันทึกข้อมูลเพื่อเพิ่มข้อมูล!!')
+    #     return
     harcascadePath = "haarcascade_frontalface_default.xml"
     faceCascade = cv2.CascadeClassifier(harcascadePath);
-    df=pd.read_csv("StudentDetails\StudentDetails.csv")
+
     cam = cv2.VideoCapture(0)
     font = cv2.FONT_HERSHEY_SIMPLEX
-    col_names =  ['Id','Name','Date','Time']
-    attendance = pd.DataFrame(columns = col_names)
+    col_names = ['Id', '', 'Name', '', 'Date', '', 'Time', '']
+    exists1 = os.path.isfile("StudentDetails\StudentDetails.csv") 
+    if exists1:
+        df = pd.read_csv("StudentDetails\StudentDetails.csv") 
+    else:
+        mess._show(title='ไม่มีรายละเอียด', message='ไม่มีรายละเอียดข้อมูลโปรดตรวจสอบ!')
+        cam.release()
+        cv2.destroyAllWindows()
+        window.destroy()
+
+    ts = time.time()
+    date = datetime.datetime.fromtimestamp(ts).strftime('%d-%m-%Y')
+    exists = os.path.isfile("Attendance\Attendance_" + date + ".csv")
+    if exists:
+        None
+    else:
+        with open("Attendance\Attendance_" + date + ".csv", 'a+') as csvFile1:
+            writer = csv.writer(csvFile1)
+            writer.writerow(col_names)            
+        csvFile1.close()
+    
     while True:
-        ret, im =cam.read()
-        gray=cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
-        faces=faceCascade.detectMultiScale(gray, 1.2,5)
-        for(x,y,w,h) in faces:
-            cv2.rectangle(im,(x,y),(x+w,y+h),(225,0,0),2)
-            Id, conf = recognizer.predict(gray[y:y+h,x:x+w])
-            if(conf < 50):
+
+        ret, im = cam.read()
+
+        start_time = time.time()
+        #if (nowTime - startTime) > 0.01:
+        
+          
+        gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+        faces = faceCascade.detectMultiScale(gray, 1.05, 5,minSize=(20, 20))
+        for (x, y, w, h) in faces: 
+            cv2.rectangle(im, (x, y), (x + w, y + h), (225, 0, 0), 2)
+               
+            # ของเดิม serial, conf = recognizer.predict(gray[y:y + h, x:x + w])
+            conf = recognizer.predict(gray[y:y + h, x:x + w])
+            if (conf < 50):     
+                print(conf)  
                 ts = time.time()
                 date = datetime.datetime.fromtimestamp(ts).strftime('%d-%m-%Y')
                 timeStamp = datetime.datetime.fromtimestamp(ts).strftime('%H:%M:%S')
-                aa=df.loc[df['Id'] == Id]['Name'].values
-                tt=str(Id)+"-"+aa
-                attendance.loc[len(attendance)] = [Id,aa,date,timeStamp]
+                ID = str(ID)
+                ID = ID[1:-1]
+                bb = bb[2:-2]                                               
+                                         
             else:
-                Id='Unknown'
-                tt=str(Id)
-            if(conf > 75):
-                noOfFile=len(os.listdir("ImagesUnknown"))+1
-                cv2.imwrite("ImagesUnknown\Image"+str(noOfFile) + ".jpg", im[y:y+h,x:x+w])
-            cv2.putText(im,str(tt),(x,y+h), font, 1,(255,255,255),2)
-        attendance=attendance.drop_duplicates(subset=['Id'],keep='first')
-        cv2.imshow('im',im)
-        if (cv2.waitKey(1)==ord('q')):
-            break
-    ts = time.time()
-    date = datetime.datetime.fromtimestamp(ts).strftime('%d-%m-%Y')
-    timeStamp = datetime.datetime.fromtimestamp(ts).strftime('%H:%M:%S')
-    Hour,Minute,Second=timeStamp.split(":")
-    fileName="Attendance\Attendance_"+date+"_"+Hour+"-"+Minute+"-"+Second+".csv"
-    attendance.to_csv(fileName,index=False)
-    cam.release()   
+                print(conf)
+                ts = time.time()
+                date = datetime.datetime.fromtimestamp(ts).strftime('%d-%m-%Y')
+                timeStamp = datetime.datetime.fromtimestamp(ts).strftime('%H:%M:%S')
+                timeStamp1 = datetime.datetime.fromtimestamp(ts).strftime('%H-%M-%S')
+                ID = '000000'
+                ID = ID[1:-1]  
+                bb = 'ไม่รู้จัก'  
+                                                                
+
+                if(conf > 75):
+                                                                                    
+                    attendance = [str(ID), '', bb, '', str(date), '', str(timeStamp),'']
+          
+             
+            cv2.putText(im, str(bb), (x, y + h), font, 1, (255, 255, 255), 2)
+            
+
+
+
+
+
+
+            
+        fpsInfo = "FPS: " + str(1.0 / (time.time() - start_time)) 
+        font = cv2.FONT_HERSHEY_DUPLEX
+                   
+      
+ 
+        cv2.putText(im, fpsInfo, (10, 20), font, 0.4, (255, 255, 255), 1)
+        startTime = time.time()   
+       
+        cv2.imshow('Taking Attendance', im)
+        if (cv2.waitKey(1) == ord('q')):
+            break 
+    
+    with open("Attendance\Attendance_" + date + ".csv", 'r') as csvFile1:
+        reader1 = csv.reader(csvFile1)
+        for lines in reader1:
+            i = i + 1
+            if (i > 1):
+                if (i % 2 != 0):
+                    iidd = str(lines[0]) + '   '                                
+                    tv.insert('', 0, text=iidd, values=(str(lines[2]), str(lines[4]), str(lines[6]), str(lines[8])))                         
+    csvFile1.close()
+    
+    cam.release()
+    cv2.destroyAllWindows()   
 ######################################## USED STUFFS ############################################
 
 global key
@@ -210,7 +288,7 @@ head1.place(x=0,y=0)
 lbl = tk.Label(frame2, text="รหัส",width=20  ,height=1  ,fg="black"  ,bg="#00aeff" ,font=('times', 17, ' bold ') )
 lbl.place(x=80, y=55)
 
-txt = tk.Entry(frame2,width=26 ,fg="black" ,bg="white",font=('times', 15, ' bold '))
+txt = tk.Entry(frame2,width=32 ,fg="black" ,bg="white",font=('times', 15, ' bold '))
 txt.place(x=30, y=88)
 
 lbl2 = tk.Label(frame2, text="ชื่อ นามสกุล",width=20  ,fg="black"  ,bg="#00aeff" ,font=('times', 17, ' bold '))
@@ -230,18 +308,18 @@ lbl3.place(x=100, y=115)
 
 
 
-res=0
-exists = os.path.isfile("StudentDetails\StudentDetails.csv")
-if exists:
-    with open("StudentDetails\StudentDetails.csv", 'r') as csvFile1:
-        reader1 = pd.read_csv(csvFile1,encoding='utf-8')
-        for l in reader1:
-            res = res + 1
-    res = (res // 2)
-    csvFile1.close()
-else:
-    res = 0
-message.configure(text='จำนวนข้อมูลที่บันทึก  : '+str(res))
+# res=0
+# exists = os.path.isfile("StudentDetails\StudentDetails.csv")
+# if exists:
+#     with open("StudentDetails\StudentDetails.csv", 'r') as csvFile1:
+#         reader1 = pd.read_csv(csvFile1,encoding='utf-8')
+#         for l in reader1:
+#             res = res + 1
+#     res = (res // 2)
+#     csvFile1.close()
+# else:
+#     res = 0
+# message.configure(text='จำนวนข้อมูลที่บันทึก  : '+str(res))
 
 ##################### MENUBAR #################################
 
